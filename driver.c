@@ -25,7 +25,7 @@ alloc = alloc_chrdev_region(&devNum,0,1,DEVICE_NAME);
 
 //Check if alloc worked
 if( alloc < 0){
-	printk(KERN_INFO "Could not register - alloc_chrdev_region failed");
+	printk(KERN_INFO "Could not register - alloc_chrdev_region failed\n");
 }
 if ( (cl = class_create( THIS_MODULE, DEVICE_NAME) ) == NULL )
 {
@@ -41,18 +41,9 @@ cdev_init(&c_dev,&fops);
 cdev_add(&c_dev,devNum,1);
 
 
-// Register the driver and operations
-// Major = register_chrdev(0,DEVICE_NAME,&fops);
-// if (Major < 0) {
-//   return Major;
-// }
-
-
-
 // init the semaphore
  sema_init(&myDevice.sem,1);
-
-printk(KERN_INFO "Major: ", Major);
+printk(KERN_INFO "s3495671 device diver initalised \n");
 
 
 return SUCCESS;
@@ -60,7 +51,7 @@ return SUCCESS;
 }
 void cleanup_module(void){
   // unregister driver
-	printk(KERN_INFO "Cleaning up!");
+	printk(KERN_INFO "Cleaning up!\n");
 	cdev_del(&c_dev);
 	device_destroy(cl,devNum);
 	class_destroy(cl);
@@ -74,16 +65,17 @@ static int device_open(struct inode *inode, struct file *file){
 
 // Check if sem has been taken
 	if(down_interruptible(&myDevice.sem)){
-		printk(KERN_INFO " Device is in use");
+		printk(KERN_INFO " Device is in use\n");
 		return 1;
 	}else{
-		printk(KERN_INFO " Device control taken");
+		printk(KERN_INFO " Device control taken\n");
 	}
 	return SUCCESS;
 }
 
 static int device_release(struct inode *inode, struct file *file){
 	up(&myDevice.sem);
+	printk(KERN_INFO " Device control Released\n");
 	return 0;
 
 }
@@ -92,6 +84,7 @@ static ssize_t device_read(struct file * f, char *buffer, size_t len, loff_t * o
  // printk(KERN_INFO "Reading: ");
 // reads data from struct and copies it to the user
  unsigned long errorBits; // bits that could not be read
+ printk(KERN_INFO "Read : %s", myDevice.data);
  errorBits = copy_to_user(buffer, myDevice.data, len);
 
  return errorBits;
@@ -104,6 +97,7 @@ static ssize_t device_write(struct file *f, const char  *buffer, size_t len, lof
 	// printk(KERN_INFO "Writing");
 	// copies input into the device
 	unsigned long errorBits; // bits that could not be read
+	printk(KERN_INFO "Write in : %s", buffer);
 	errorBits = copy_from_user(myDevice.data, buffer, len);
   return errorBits;
 
